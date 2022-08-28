@@ -1,0 +1,207 @@
+import mysql.connector
+
+con = mysql.connector.connect(host='localhost', password='root', user='root')
+cur = con.cursor()
+list_of_command = ['create database food_man;' , 'use food_man' , 'create table admin_info(Id varchar(20) , Passwd varchar(20));' , 'create table menu(Item varchar(20) , price int(4));' , 'create table customer(user varchar(20) , passwd varchar(20) , phone int(10) , purchasedTot int(5));']
+try:
+    for i in list_of_command:
+        cur.execute(i)
+        con.commit()
+except:
+    print('')
+    cur.execute('use food_man;')
+cur.execute('select * from menu;')
+menu = cur.fetchall()
+print(menu)
+user = str()
+passwd = str()
+
+
+def Admin_session():
+    while True:
+        print('+--------------------------------------------------------------------+')
+        print('|                                                                    |')
+        print('|    1) Edit Price of Menu                                           |')
+        print('|    2) Add Menu                                                     |')
+        print('|    3) Delete Menu                                                  |')
+        print('|    4) view Customer Purchased                                      |')
+        print('|                                                                    |')
+        print('+--------------------------------------------------------------------+')
+        # print('5) Change Admin Id and Password')
+        print('')
+        op = int(input('Option :'))
+        print('Becarefull the entered data will be affected in the Mysql Database')
+        print('___________________________________________________________________')
+        if op == 1:
+            # Listing the data present in databases
+            cur.execute('select * from menu;')
+            for i in cur:
+                print(i)
+
+            # Reciving new(item and price)
+            itm = input('Enter the item name :')
+            pric = int(input('Enter the price :'))
+            q = 'update menu set price = "%s" where item = "%s" ;'
+            fq = q % (pric, itm)
+            print(fq)
+            cur.execute(fq)
+            con.commit()
+
+        if op == 2:
+            cur.execute('select * from menu;')
+            for i in cur:
+                print(i)
+            itm = input('Enter the item name :')
+            price = int(input('Enter the price of the item :'))
+            q = 'insert into menu value("%s",%s);' % (itm, price)
+            cur.execute(q)
+            con.commit()
+        if op == 3:
+            # delete from <table_name> where item = dosa;
+            for i in menu:
+                print(i)
+            ite = input('Enter the item should be deleted :')
+            q = 'delete from menu where item = "%s" ;' % ite
+            cur.execute(q)
+            con.commit()
+        if op == 4:
+            q = 'select * from customer;'
+            cur.execute(q)
+            data = cur.fetchall()
+            for i in data:
+                print(i)
+
+
+def customer_session():
+    print('_______________________')
+    cart = []
+    while True:
+        #print('YOU HAVE COME TO CUSTOMER_SESSION')
+        print('+--------------------------------------------------------------------+')
+        print('|                                                                    |')
+        print('|    1) Display Menu                                                 |')
+        print('|    2) Add Item                                                     |')
+        print('|    3) Display Cart                                                 |')
+        print('|    4) Delete Cart(Warning This will delete all your item           |')
+        print('|    5) Display Total                                                |')
+        print('|    6) exit                                                         |')
+        print('|                                                                    |')
+        print('+--------------------------------------------------------------------+')
+
+        op = int(input('Option :'))
+        if op == 1:
+            for i in menu:
+                print(i)
+        if op == 2:
+            y = 'y'
+            while y == 'y':
+                ele = input('Enter the Item :')
+                q = f'select * from menu where item like "%{ele}%" ;'
+                cur.execute(q)
+                d = cur.fetchall()
+                print(d)
+                if len(d) == 1:
+                    cart.append(d[0])
+                else:
+                    ele1 = input('Enter the item from above :')
+                    for i in d:
+                        if ele1 in i:
+                            cart.append(i)
+
+                y = input('Do you want to continu(y/n) :')
+                #y = input('Enter do you want to countinue(y/n) :')
+        if op == 3:
+            print(cart)
+        if op == 4:
+            cart = []
+        if op == 5:
+            sum = int()
+            for i in cart:
+                sum += i[1]
+            print('Your sub Total is :' , sum)
+            q = f'update customer set purchasedTot = purchasedTot + sum ;'
+
+            print('Successfully You have Purchased :)')
+        if op == 6:
+            break
+
+
+def customer_login():
+    while True:
+        print('+--------------------------------------------------------------------+')
+        print('|                                                                    |')
+        print('|    1) New Customer                                                 |')
+        print('|    2) Old Customer                                                 |')
+        print('|    3) Exit                                                         |')
+        print('|                                                                    |')
+        print('+--------------------------------------------------------------------+')
+        option = int(input('Option :'))
+        if option == 1:
+            print('______________________')
+            userName = input('Enter your Name :')
+            passwd = input('Set New Password :')
+            phone = int(input('Enter the phone number :'))
+            try:
+                q = 'insert into customer values("%s" , "%s" , %s , null);' % (
+                    userName, passwd, phone)
+                # print(q)
+                cur.execute(q)
+                con.commit()
+                print('Your data has been add Login from login page again :)')
+            except:
+                print('This user already exits :(')
+        if option == 2:
+            print('_____________________')
+            global user
+            user = input('Enter the User Name :')
+            passwd = input('Enter the Password :')
+            cur.execute('select * from customer;')
+            cu1 = cur.fetchall()
+            for i in cu1:
+                if (user, passwd) == (i[0], i[1]):
+                    print('Success')
+                    customer_session()
+
+        if option == 3:
+            break
+
+
+def main():
+    while True:
+        print('+--------------------------------------------+')
+        print('|                                            |')
+        print('|    1) Login as Admin                       |')
+        print('|    2) View Menu Items                      |')
+        print('|    3) Login as Customer                    |')
+        print('|    4) Exit                                 |')
+        print('|                                            |')
+        print('+--------------------------------------------+')
+        op = int(input('Option :'))
+
+        if op == 1:
+            cur.execute('select * from admin_info')
+            for i in cur:
+                AdminId = i
+            id = input('Enter the Admin id :')
+            pas = (input('Enter the Password :'))
+            if (id, pas) == AdminId:
+                print('Welcome Ashwin :)')
+                Admin_session()
+            else:
+                print('WRONG USER NAME OR PASSWORD :(')
+
+        if op == 2:
+            print('MENU')
+            cur.execute('select * from menu;')
+            for i in cur:
+                print(i)
+        if op == 3:
+            print('WELCOME :)')
+            customer_login()
+        if op == 5:
+            q = input('Enter the qu :')
+            cur.execute(q)
+            con.commit()
+
+
+main()
