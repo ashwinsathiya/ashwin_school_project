@@ -25,6 +25,7 @@ def Admin_session():
         print('|    2) Add Menu                                                     |')
         print('|    3) Delete Menu                                                  |')
         print('|    4) view Customer Purchased                                      |')
+        print('|    5) Exit                                                         |')
         print('|                                                                    |')
         print('+--------------------------------------------------------------------+')
         # print('5) Change Admin Id and Password')
@@ -70,9 +71,11 @@ def Admin_session():
             data = cur.fetchall()
             for i in data:
                 print(i)
+        if op == 5:
+            break
 
 
-def customer_session():
+def customer_session(cus_Id):
     print('_______________________')
     cart = []
     while True:
@@ -119,7 +122,9 @@ def customer_session():
             for i in cart:
                 sum += i[1]
             print('Your sub Total is :' , sum)
-            q = f'update customer set purchasedTot = purchasedTot + sum ;'
+            q = f'update customer set purchasedTot = {sum} where user = "{cus_Id}" ;'
+            cur.execute(q)
+            con.commit()
 
             print('Successfully You have Purchased :)')
         if op == 6:
@@ -160,7 +165,7 @@ def customer_login():
             for i in cu1:
                 if (user, passwd) == (i[0], i[1]):
                     print('Success')
-                    customer_session()
+                    customer_session(user)
 
         if option == 3:
             break
